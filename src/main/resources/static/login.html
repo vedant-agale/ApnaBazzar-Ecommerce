@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Apna Bazaar - Login</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #2874f0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 10px; width: 350px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; outline: none; }
+        button { width: 100%; padding: 12px; background-color: #fb641b; color: white; border: none; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        button:hover { background-color: #e35a18; }
+        
+        .toggle-link { margin-top: 15px; font-size: 14px; cursor: pointer; color: #2874f0; text-decoration: underline; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="loginForm">
+            <h2>🔐 Login</h2>
+            <input type="email" id="loginEmail" placeholder="Enter Email">
+            <input type="password" id="loginPass" placeholder="Enter Password">
+            <button onclick="login()">Login</button>
+            <div class="toggle-link" onclick="toggleForms()">New User? Create Account</div>
+        </div>
+
+        <div id="registerForm" class="hidden">
+            <h2>📝 Sign Up</h2>
+            <input type="text" id="regName" placeholder="Full Name">
+            <input type="email" id="regEmail" placeholder="Enter Email">
+            <input type="password" id="regPass" placeholder="Set Password">
+            <button onclick="register()">Register</button>
+            <div class="toggle-link" onclick="toggleForms()">Already have an account? Login</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://localhost:8080/api/users";
+
+        // Toggle between Login & Signup
+        function toggleForms() {
+            document.getElementById("loginForm").classList.toggle("hidden");
+            document.getElementById("registerForm").classList.toggle("hidden");
+        }
+
+        // --- 1. REGISTER LOGIC ---
+        async function register() {
+            const user = {
+                name: document.getElementById("regName").value,
+                email: document.getElementById("regEmail").value,
+                password: document.getElementById("regPass").value
+            };
+
+            const response = await fetch(API_BASE + "/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(user)
+            });
+
+            const message = await response.text();
+            alert(message);
+            
+            if (message.includes("Successful")) {
+                toggleForms(); // Registration ke baad Login form dikhao
+            }
+        }
+
+        // --- 2. LOGIN LOGIC ---
+        async function login() {
+            const user = {
+                email: document.getElementById("loginEmail").value,
+                password: document.getElementById("loginPass").value
+            };
+
+            const response = await fetch(API_BASE + "/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(user)
+            });
+
+            const userData = await response.text(); // Agar fail hua to empty aayega
+
+            if (userData) {
+                // IMPORTANT: User ko browser ki memory mein save kar lo
+                localStorage.setItem("loggedInUser", userData);
+                
+                alert("Login Successful! Welcome to Apna Bazaar 🎉");
+                window.location.href = "shop.html"; // Dukan mein bhejo
+            } else {
+                alert("Invalid Email or Password! ❌");
+            }
+        }
+    </script>
+
+</body>
+</html>

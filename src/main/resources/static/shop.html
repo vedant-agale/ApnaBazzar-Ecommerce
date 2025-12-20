@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Apna Bazaar - Shop</title>
+    <style>
+        /* CSS STYLES */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f1f3f6; margin: 0; }
+        
+        /* Navbar Styling */
+        .navbar { background-color: #2874f0; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .logo { font-size: 24px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        
+        /* Search Bar */
+        .search-box { padding: 10px; width: 350px; border-radius: 5px; border: none; outline: none; font-size: 14px; }
+        
+        /* Buttons */
+        .cart-btn { background-color: white; color: #2874f0; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 2px; font-size: 14px; margin-left: 10px; }
+        .cart-btn:hover { background-color: #f0f0f0; }
+
+        /* Welcome Message */
+        #welcomeMsg { font-size: 16px; font-weight: 500; color: #ffe500; margin-right: 20px; }
+
+        /* Product Grid */
+        .product-container { display: flex; flex-wrap: wrap; justify-content: center; padding: 20px; gap: 20px; }
+        
+        /* Product Card */
+        .card { background: white; width: 250px; padding: 20px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .card img { width: 100%; height: 200px; object-fit: contain; margin-bottom: 15px; }
+        .title { font-size: 16px; color: #212121; margin-bottom: 5px; font-weight: 500; }
+        .price { font-size: 18px; font-weight: bold; color: #212121; margin-bottom: 15px; }
+        .btn-buy { background-color: #ff9f00; color: white; border: none; padding: 12px 20px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 2px; text-transform: uppercase; }
+        .btn-buy:hover { background-color: #f39c12; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div style="display: flex; align-items: center;">
+            <div class="logo">🛒 Apna Bazaar</div>
+        </div>
+
+        <div id="welcomeMsg">Welcome, Guest</div>
+        
+        <input type="text" id="searchBox" class="search-box" placeholder="Search products..." onkeyup="searchProducts()">
+
+        <div> 
+            <button class="cart-btn" onclick="window.location.href='orders.html'">My Orders 📜</button>
+            <button class="cart-btn" id="cartCountBtn" onclick="window.location.href='cart.html'">Cart (0)</button>
+        </div>
+    </div>
+
+    <div class="product-container" id="productList">
+        </div>
+
+    <script>
+        const API_BASE = "http://localhost:8080/api";
+        let currentUser = null;
+
+        // --- 1. GATEKEEPER (Login Check) ---
+        function checkLogin() {
+            const userJson = localStorage.getItem("loggedInUser");
+            if (!userJson) {
+                alert("Please Login First! 🔒");
+                window.location.href = "login.html";
+                return;
+            }
+            currentUser = JSON.parse(userJson);
+            
+            // Welcome Message Update karo
+            document.getElementById("welcomeMsg").innerText = "Welcome, " + currentUser.name + " 👋";
+            
+            // Login confirm hone ke baad hi shop load karo
+            loadShop();
+        }
+
+        // --- 2. LOAD PRODUCTS ---
+        async function loadShop() {
+            try {
+                const response = await fetch(API_BASE + "/products/all");
+                const products = await response.json();
+                renderProducts(products);
+                updateCartCount();
+            } catch (error) {
+                console.error("Error loading shop:", error);
+            }
+        }
+
+        // --- 3. SEARCH LOGIC ---
+        async function searchProducts() {
+            const keyword = document.getElementById("searchBox").value;
+            if (keyword.length === 0) {
+                loadShop();
+                return;
+            }
+            const response = await fetch(API_BASE + "/products/search?keyword=" + keyword);
+            const products = await response.json();
+            renderProducts(products);
+        }
+
+        // --- 4. RENDER HTML (Jo gayab ho gaya tha) ---
+        function renderProducts(products) {
+            let html = "";
+            if(products.length === 0) {
+                html = "<h3 style='width:100%; text-align:center; color:#555;'>No Products Found 😢</h3>";
+            } else {
+                products.forEach(p => {
+                    html += `
+                    <div class="card">
+                        <img src="${p.image}" alt="Product Image">
+                        <div class="title">${p.name}</div>
+                        <div class="price">₹${p.price}</div>
+                        <button class="btn-buy" onclick="addToCart('${p.name}', ${p.price}, '${p.image}')">ADD TO CART 🛍️</button>
+                    </div>`;
+                });
+            }
+            document.getElementById("productList").innerHTML = html;
+        }
+
+        // --- 5. ADD TO CART ---
+        async function addToCart(name, price, image) {
+            // Ab hum cart user ke naam se save karenge (Future Step)
+            // Abhi ke liye purana logic use karte hain
+            const cartItem = {
+                productName: name,
+                price: price,
+                image: image,
+                quantity: 1
+            };
+
+            const response = await fetch(API_BASE + "/cart/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cartItem)
+            });
+
+            if (response.ok) {
+                alert(name + " added to cart! 🎉");
+                updateCartCount();
+            } else {
+                alert("Failed to add to cart");
+            }
+        }
+
+        // --- 6. UPDATE CART COUNT ---
+        async function updateCartCount() {
+            const response = await fetch(API_BASE + "/cart/all");
+            const items = await response.json();
+            document.getElementById("cartCountBtn").innerText = "Cart (" + items.length + ")";
+        }
+
+        // Start Here
+        checkLogin();
+
+    </script>
+
+</body>
+</html>

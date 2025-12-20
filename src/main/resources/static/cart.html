@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>My Cart</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: #f8f9fa;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+
+      /* Table Styling */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        background-color: #2874f0;
+        color: white;
+      }
+      img {
+        width: 50px;
+        height: 50px;
+        object-fit: contain;
+      }
+
+      /* Total Box */
+      .total-box {
+        text-align: right;
+        margin-top: 20px;
+        font-size: 20px;
+        font-weight: bold;
+      }
+      .btn-checkout {
+        background: #fb641b;
+        color: white;
+        padding: 10px 30px;
+        border: none;
+        font-size: 18px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      .btn-home {
+        background: #2874f0;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="shop.html" class="btn-home">⬅ Back to Shop</a>
+
+    <div class="container">
+      <h1>🛒 Your Shopping Cart</h1>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="cartBody"></tbody>
+      </table>
+
+      <div class="total-box">
+        Total: <span id="totalPrice">₹0</span><br />
+        <button class="btn-checkout" onclick="checkout()">Place Order</button>
+      </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8080/api/cart";
+
+        // 1. CART LOAD KARO
+        async function loadCart() {
+            const response = await fetch(API_URL + "/all");
+            const items = await response.json();
+            
+            let html = "";
+            let total = 0;
+
+            items.forEach(item => {
+                total += item.price;
+                html += `
+                <tr>
+                    <td><img src="${item.image}" alt="img"></td>
+                    <td>${item.productName}</td>
+                    <td>₹${item.price}</td>
+                    <td>
+                        <button onclick="removeItem(${item.id})" style="background:red; color:white; border:none; padding:5px 10px; cursor:pointer; border-radius:5px;">
+                            Remove ❌
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            document.getElementById("cartBody").innerHTML = html;
+            document.getElementById("totalPrice").innerText = "₹" + total;
+        }
+
+        // 2. REMOVE ITEM LOGIC (Naya Jugad) 🗑️
+        async function removeItem(id) {
+            // Backend ko bolo: "Is ID ko uda do"
+            await fetch(API_URL + "/remove/" + id, {
+                method: "DELETE"
+            });
+            // Page refresh karo taaki item gayab ho jaye
+            loadCart(); 
+        }
+
+        // 3. CHECKOUT LOGIC
+        async function checkout() {
+            const response = await fetch(API_URL + "/checkout?name=Vedant", {
+                method: "POST"
+            });
+            const message = await response.text();
+            alert(message);
+            location.reload();
+        }
+
+        loadCart();
+    </script>
+  </body>
+</html>
