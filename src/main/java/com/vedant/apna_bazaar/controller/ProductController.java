@@ -4,31 +4,21 @@ import com.vedant.apna_bazaar.model.Product;
 import com.vedant.apna_bazaar.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/products")
+@RestController // Zaroori: Taaki ye API ki tarah kaam kare
+@RequestMapping("/api/products") // Zaroori: Browser isi path par data dhundega
+@CrossOrigin(origins = "*") // Zaroori: Frontend (HTML) ko permission dene ke liye
 public class ProductController {
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductRepository productRepository; // Aapka repository call
 
-    // 1. Naya Product Add karna (POST)
-    @PostMapping("/add")
-    public Product addProduct(@RequestBody Product product) {
-        return productRepository.save(product);
-    }
-
-    // 2. Saare Products dekhna (GET)
-    @GetMapping("/all")
+    // Purana koi bhi "GET" method ho toh usey hata kar ye simple wala rakhein
+    @GetMapping
     public List<Product> getAllProducts() {
+        // Ye line database ke 'products' table se saara data nikaal degi
         return productRepository.findAll();
-    }
-
-    // --- SEARCH API ---
-    // URL: /api/products/search?keyword=mac
-    @GetMapping("/search")
-    public List<Product> searchProducts(@RequestParam String keyword) {
-        return productRepository.findByNameContainingIgnoreCase(keyword);
     }
 }

@@ -3,35 +3,33 @@ package com.vedant.apna_bazaar.controller;
 import com.vedant.apna_bazaar.model.User;
 import com.vedant.apna_bazaar.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "*") // Zaroori: Taaki browser login ko block na kare
 public class UserController {
 
     @Autowired
     private UserRepository userRepository;
 
-    // --- 1. REGISTER (SIGNUP) ---
+    // 📝 1. REGISTER (Naya Account Banane ke liye)
     @PostMapping("/register")
-    public String register(@RequestBody User user) {
-        // Pehle check karo email already hai kya?
-        if (userRepository.findByEmail(user.getEmail()) != null) {
-            return "Email already exists!";
-        }
-        userRepository.save(user);
-        return "Registration Successful! ✅";
+    public ResponseEntity<?> register(@RequestBody User user) {
+        return ResponseEntity.ok(userRepository.save(user));
     }
 
-    // --- 2. LOGIN ---
+    // 🔑 2. LOGIN (Check karne ke liye)
     @PostMapping("/login")
-    public User login(@RequestBody User loginData) {
+    public ResponseEntity<?> login(@RequestBody User loginData) {
+        // Database mein email se user ko dhundo
         User user = userRepository.findByEmail(loginData.getEmail());
-        
-        // Agar user mila AUR password match hua
+
         if (user != null && user.getPassword().equals(loginData.getPassword())) {
-            return user; // Pura user wapas bhej do (Frontend sambhal lega)
+            return ResponseEntity.ok(user); // Agar password sahi hai toh user details bhej do
+        } else {
+            return ResponseEntity.status(401).body("Invalid Email or Password");
         }
-        return null; // Galat password
     }
 }
